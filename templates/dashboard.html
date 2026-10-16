@@ -1,333 +1,152 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>MAIA Dashboard</title>
-<style>
-  :root {
-    --bg-light: #f5f3f0;
-    --text-light: #333;
-    --accent-light: #b4845c;
-    --border-light: #d8b08c;
-    --btn-bg-light: #b4845c;
-    --btn-hover-light: #9a6845;
-    --history-empty-light: #666;
+{% extends "base.html" %}
+{% block title %}MAIA Dashboard{% endblock %}
 
-    --bg-dark: #1e1e1e;
-    --text-dark: #ddd;
-    --accent-dark: #d4a76a;
-    --border-dark: #8b7b58;
-    --btn-bg-dark: #d4a76a;
-    --btn-hover-dark: #b08c52;
-    --history-empty-dark: #999;
-  }
-
-  body {
-    font-family: 'Courier New', monospace;
-    background: var(--bg-light);
-    color: var(--text-light);
-    margin: 0;
-    padding: 20px;
-    max-width: 720px;
-    margin-left: auto;
-    margin-right: auto;
-    transition: background-color 0.3s, color 0.3s;
-  }
-  header {
-    font-size: 2rem;
-    font-weight: 900;
-    color: var(--accent-light);
-    text-align: center;
-    margin-bottom: 20px;
-    user-select: none;
-    transition: color 0.3s;
-  }
-  section { margin-bottom: 40px; }
-  h2 {
-    border-bottom: 3px solid var(--accent-light);
-    padding-bottom: 6px;
-    transition: border-color 0.3s;
-  }
-  table {
-    width: 100%;
-    border-collapse: collapse;
-    margin-top: 10px;
-  }
-  th, td {
-    border: 1.8px solid var(--border-light);
-    padding: 12px 8px;
-    text-align: left;
-    transition: border-color 0.3s;
-  }
-  th {
-    background-color: var(--border-light);
-    color: #fff;
-    transition: background-color 0.3s;
-  }
-  button, .btn-link {
-    background: var(--btn-bg-light);
-    color: white;
-    font-weight: 700;
-    font-size: 1rem;
-    border: none;
-    border-radius: 8px;
-    padding: 8px 16px;
-    cursor: pointer;
-    box-shadow: 0 3px 8px rgba(180,132,92,0.7);
-    transition: background-color 0.3s ease;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    text-decoration: none;
-    user-select: none;
-    min-width: 100px;
-  }
-  button:hover, .btn-link:hover {
-    background: var(--btn-hover-light);
-  }
-  .history-empty {
-    font-style: italic;
-    color: var(--history-empty-light);
-    margin-top: 12px;
-    transition: color 0.3s;
-  }
-  .footer {
-    margin-top: 60px;
-    text-align: center;
-    font-size: 0.9rem;
-    user-select: none;
-    transition: color 0.3s;
-  }
-  .model-list {
-    list-style: none;
-    padding-left: 0;
-  }
-  .model-list li {
-    margin: 10px 0;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-  }
-  .actions {
-    display: flex;
-    gap: 12px;
-    margin-top: 10px;
-  }
-
-  /* Dark mode styles */
-  body.dark {
-    background: var(--bg-dark);
-    color: var(--text-dark);
-  }
-  body.dark header {
-    color: var(--accent-dark);
-  }
-  body.dark h2 {
-    border-color: var(--accent-dark);
-  }
-  body.dark th, body.dark td {
-    border-color: var(--border-dark);
-  }
-  body.dark th {
-    background-color: var(--border-dark);
-  }
-  body.dark button, body.dark .btn-link {
-    background: var(--btn-bg-dark);
-    box-shadow: 0 3px 8px rgba(212,167,106,0.7);
-  }
-  body.dark button:hover, body.dark .btn-link:hover {
-    background: var(--btn-hover-dark);
-  }
-  body.dark .history-empty {
-    color: var(--history-empty-dark);
-  }
-  body.dark .footer {
-    color: var(--text-dark);
-  }
-
-  /* Dark mode toggle button style */
-  #dark-mode-toggle {
-    position: fixed;
-    top: 12px;
-    right: 12px;
-    background: var(--btn-bg-light);
-    color: white;
-    border: none;
-    padding: 8px 14px;
-    border-radius: 20px;
-    cursor: pointer;
-    font-weight: 700;
-    font-family: 'Courier New', monospace;
-    box-shadow: 0 3px 8px rgba(180,132,92,0.7);
-    transition: background-color 0.3s ease;
-    user-select: none;
-    z-index: 1000;
-  }
-  #dark-mode-toggle:hover {
-    background: var(--btn-hover-light);
-  }
-  body.dark #dark-mode-toggle {
-    background: var(--btn-bg-dark);
-  }
-  body.dark #dark-mode-toggle:hover {
-    background: var(--btn-hover-dark);
-  }
-</style>
-</head>
-<body>
-
-<header>MAIA Dashboard</header>
-
-<button id="dark-mode-toggle" aria-pressed="false" aria-label="Toggle dark mode">Dark Mode</button>
-
-<section>
-  <h2>Available Models</h2>
-  <ul class="model-list" id="models-list">
-    <!-- Models loaded here by JS -->
-  </ul>
-</section>
-
-<section>
-  <h2>Recent Classification Results</h2>
-  <div id="history-container">
-    <p class="history-empty">No classification results yet.</p>
+{% block content %}
+<div class="dash-head">
+  <div>
+    <h1>Dashboard</h1>
+    <div class="stats">
+      <span><b id="stat-on">-</b> models on</span>
+      <span><b id="stat-runs">-</b> recent scans</span>
+    </div>
   </div>
-  <div class="actions">
-    <button id="clear-history-btn">Clear History</button>
-    <a href="/" class="btn-link" role="button" tabindex="0">Back</a>
-  </div>
-</section>
-
-<div class="footer">
-  &copy; 2025 MAIA Medical AI Interface
+  <a href="/logout" class="btn ghost small">Log out</a>
 </div>
 
+<div class="dash-grid">
+  <section class="card">
+    <h2 class="section-title">Models</h2>
+    <p class="muted" style="font-size: 0.85rem; margin-top: 0;">Switched-off models disappear from the scan page until you turn them back on. This resets when the server restarts.</p>
+    <ul class="switch-list" id="models-list">
+      <li class="empty">Loading...</li>
+    </ul>
+  </section>
+
+  <section class="card">
+    <h2 class="section-title">Recent results</h2>
+    <div id="history-container">
+      <p class="empty">No classification results yet.</p>
+    </div>
+    <div style="display: flex; gap: 10px; margin-top: 18px;">
+      <button id="refresh-btn" class="btn ghost small" type="button">Refresh</button>
+      <button id="clear-history-btn" class="btn small" type="button">Clear history</button>
+    </div>
+  </section>
+</div>
+{% endblock %}
+
+{% block scripts %}
 <script>
   const modelsList = document.getElementById('models-list');
   const historyContainer = document.getElementById('history-container');
-  const clearBtn = document.getElementById('clear-history-btn');
-  const darkToggle = document.getElementById('dark-mode-toggle');
 
-  // Dark mode toggle logic
-  function setDarkMode(enabled) {
-    if (enabled) {
-      document.body.classList.add('dark');
-      darkToggle.textContent = 'Light Mode';
-      darkToggle.setAttribute('aria-pressed', 'true');
-      localStorage.setItem('darkMode', 'true');
-    } else {
-      document.body.classList.remove('dark');
-      darkToggle.textContent = 'Dark Mode';
-      darkToggle.setAttribute('aria-pressed', 'false');
-      localStorage.setItem('darkMode', 'false');
-    }
+  function cell(tr, text, cls) {
+    const td = document.createElement('td');
+    td.textContent = text;
+    if (cls) td.className = cls;
+    tr.appendChild(td);
   }
 
-  // Initialize dark mode based on saved preference or system
-  const savedDarkMode = localStorage.getItem('darkMode');
-  if (savedDarkMode === 'true' || (!savedDarkMode && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
-    setDarkMode(true);
+  function countOn() {
+    document.getElementById('stat-on').textContent =
+      modelsList.querySelectorAll('.switch[aria-checked="true"]').length;
   }
-
-  darkToggle.addEventListener('click', () => {
-    setDarkMode(!document.body.classList.contains('dark'));
-  });
 
   async function fetchModelStatus() {
     try {
       const res = await fetch('/model_status');
-      if (!res.ok) throw new Error('Failed to fetch model status');
-      const status = await res.json();
-      renderModels(status);
-    } catch (e) {
-      modelsList.innerHTML = '<li>Error loading models status.</li>';
+      if (!res.ok) throw new Error();
+      const models = await res.json();
+      modelsList.innerHTML = '';
+
+      for (const m of models) {
+        const li = document.createElement('li');
+        const text = document.createElement('span');
+        text.textContent = m.name;
+        const scan = document.createElement('span');
+        scan.className = 'scan';
+        scan.textContent = m.scan + ' / ' + m.version;
+        text.appendChild(scan);
+
+        const sw = document.createElement('button');
+        sw.type = 'button';
+        sw.className = 'switch';
+        sw.setAttribute('role', 'switch');
+        sw.setAttribute('aria-checked', m.enabled);
+        sw.setAttribute('aria-label', m.name);
+        sw.addEventListener('click', () => toggleModel(m.id, sw));
+
+        li.append(text, sw);
+        modelsList.appendChild(li);
+      }
+      countOn();
+    } catch {
+      modelsList.innerHTML = '<li class="empty">Couldn\'t load the model list.</li>';
     }
   }
 
-  function renderModels(status) {
-    modelsList.innerHTML = '';
-    const modelNames = {
-      '2': "Brain Tumor Detection",
-      '3': "Brain Tumor Classification",
-      '4': "Alzheimer's Classification",
-      '5': "COVID-19 Detection",
-      '6': "Fracture Detection",
-      '7': "Eye Disease Classification",
-      "8": "Pneumonia Detection"
-    };
-    for (const [id, enabled] of Object.entries(status)) {
-      const li = document.createElement('li');
-      li.textContent = modelNames[id] || `Model ${id}`;
-
-      const btn = document.createElement('button');
-      btn.textContent = enabled ? 'Disable' : 'Enable';
-      btn.dataset.modelId = id;
-      btn.dataset.enabled = enabled;
-      btn.addEventListener('click', toggleModel);
-      li.appendChild(btn);
-
-      modelsList.appendChild(li);
-    }
-  }
-
-  async function toggleModel(e) {
-    const btn = e.target;
-    const modelId = btn.dataset.modelId;
-
+  async function toggleModel(id, sw) {
+    sw.disabled = true;
     try {
-      const res = await fetch(`/toggle_model/${modelId}`, { method: 'POST' });
-      if (!res.ok) throw new Error('Failed to toggle model');
+      const res = await fetch(`/toggle_model/${encodeURIComponent(id)}`, { method: 'POST' });
+      if (!res.ok) throw new Error();
       const data = await res.json();
-
-      btn.textContent = data.enabled ? 'Disable' : 'Enable';
-      btn.dataset.enabled = data.enabled;
-    } catch (err) {
-      alert('Error toggling model status');
+      sw.setAttribute('aria-checked', data.enabled);
+      countOn();
+    } catch {
+      alert("Couldn't switch that model. Are you still logged in?");
+    } finally {
+      sw.disabled = false;
     }
   }
 
   async function fetchHistory() {
     try {
       const res = await fetch('/history');
-      if (!res.ok) throw new Error('Failed to fetch history');
+      if (!res.ok) throw new Error();
       const history = await res.json();
+      document.getElementById('stat-runs').textContent = history.length;
 
       if (history.length === 0) {
-        historyContainer.innerHTML = '<p class="history-empty">No classification results yet.</p>';
+        historyContainer.innerHTML = '<p class="empty">No classification results yet.</p>';
         return;
       }
 
-      let html = '<table><thead><tr><th>Model</th><th>Filename</th><th>Prediction</th><th>Confidence</th></tr></thead><tbody>';
+      const table = document.createElement('table');
+      table.className = 'history-table';
+      table.innerHTML = '<thead><tr><th>Time</th><th>Model</th><th>File</th><th>Prediction</th><th style="text-align:right">Conf.</th></tr></thead>';
+      const body = document.createElement('tbody');
       for (const entry of history) {
-        html += `<tr>
-          <td>${entry.model}</td>
-          <td>${entry.filename}</td>
-          <td>${entry.prediction}</td>
-          <td>${entry.confidence}</td>
-        </tr>`;
+        const tr = document.createElement('tr');
+        cell(tr, entry.time || '');
+        cell(tr, entry.model);
+        cell(tr, entry.filename, 'file');
+        cell(tr, entry.prediction);
+        cell(tr, entry.confidence, 'num');
+        body.appendChild(tr);
       }
-      html += '</tbody></table>';
-      historyContainer.innerHTML = html;
+      table.appendChild(body);
+      historyContainer.innerHTML = '';
+      historyContainer.appendChild(table);
     } catch {
-      historyContainer.innerHTML = '<p class="history-empty">Failed to load history.</p>';
+      historyContainer.innerHTML = '<p class="empty">Failed to load history.</p>';
     }
   }
 
-  clearBtn.addEventListener('click', async () => {
-    if (!confirm("Clear all history?")) return;
+  document.getElementById('clear-history-btn').addEventListener('click', async () => {
+    if (!confirm('Clear all history?')) return;
     try {
       const res = await fetch('/clear_history', { method: 'POST' });
-      if (!res.ok) throw new Error('Failed to clear history');
+      if (!res.ok) throw new Error();
       fetchHistory();
     } catch {
-      alert("Failed to clear history");
+      alert('Failed to clear history');
     }
   });
+
+  document.getElementById('refresh-btn').addEventListener('click', fetchHistory);
 
   fetchModelStatus();
   fetchHistory();
 </script>
-
-</body>
-</html>
+{% endblock %}

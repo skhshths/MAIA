@@ -1,633 +1,251 @@
-  <!DOCTYPE html>
-  <html lang="en">
-  <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>MAIA</title>
-  <style>
-      @keyframes spin {
-      to { transform: rotate(360deg); }
-    }
+{% extends "base.html" %}
+{% block title %}MAIA - Medical AI Assistant{% endblock %}
 
-    :root {
-      --bg: #f5f3f0;
-      --accent: #d8b08c;
-      --accent-dark: #b4845c;
-      --text: #333;
-      --soft: #e8e6e4;
-    }
+{% block content %}
+<section class="intro">
+<pre class="ascii-art" aria-label="MAIA">
+ __  __    _    ___    _
+|  \/  |  /_\  |_ _|  /_\
+| |\/| | //_\\  | |  //_\\
+| |  | |/ ___ \ | | / ___ \
+|_|  |_/_/   \_\___/_/   \_\</pre>
+  <div>
+    <p>Pick a model, drop in a scan, and MAIA will tell you what it sees, plus how sure it is.</p>
+    <p class="muted">Everything runs on this machine. MAIA is a learning project, not a doctor, so treat every result as a second opinion at most.</p>
+  </div>
+</section>
 
-    .dark {
-      --bg: #1e1e1e;
-      --accent: #d8b08c;
-      --accent-dark: #b4845c;
-      --text: #ddd;
-      --soft: #2c2c2c;
-    }
+<div class="workspace">
+  <div>
+    <section class="panel card">
+      <h2 class="section-title"><span class="step-no">1.</span>Pick a model</h2>
+      {% if groups %}
+        {% for scan, models in groups.items() %}
+        <fieldset class="model-group">
+          <legend>{{ scan }}</legend>
+          {% for m in models %}
+          <label class="model-option">
+            <input type="radio" name="mode" value="{{ m.id }}" data-name="{{ m.name }}" data-scan="{{ m.scan }}" />
+            <span class="name">{{ m.name }}</span>
+            <span class="ver">{{ m.version }}</span>
+            <span class="about">{{ m.about }}</span>
+          </label>
+          {% endfor %}
+        </fieldset>
+        {% endfor %}
+      {% else %}
+        <p class="empty">Every model is switched off at the moment. An admin can turn them back on from the dashboard.</p>
+      {% endif %}
+    </section>
 
-    body {
-      background-color: var(--bg);
-      color: var(--text);
-      font-family: 'Courier New', monospace;
-      margin: 0;
-      padding: 0;
-      line-height: 1.5;
-      transition: background-color 0.4s ease, color 0.4s ease;
-    }
+    <section class="panel card">
+      <h2 class="section-title"><span class="step-no">2.</span>Add a scan</h2>
+      <label class="drop-zone" id="drop-zone" for="image">
+        <input type="file" id="image" accept=".png,.jpg,.jpeg,image/png,image/jpeg" />
+        <img id="image-preview" alt="Preview of the selected scan" hidden />
+        <span id="drop-text"><strong>Choose a file</strong> or drag it here</span>
+        <span class="hint" id="drop-hint">.png or .jpg, up to 16 MB</span>
+        <span class="file-name" id="file-name" aria-live="polite"></span>
+      </label>
 
-    header {
-      background: linear-gradient(90deg, var(--accent-dark), var(--accent));
-      color: white;
-      padding: 24px 20px;
-      text-align: center;
-      font-size: 2.25rem;
-      letter-spacing: 2.5px;
-      font-weight: 900;
-      box-shadow: 0 4px 10px rgba(0,0,0,0.15);
-      user-select: none;
-    }
+      <button id="submit-btn" class="btn wide" type="button" style="margin-top: 22px;" disabled>Analyze scan</button>
+      <p class="form-error" id="form-error" role="alert"></p>
+    </section>
+  </div>
 
-    main {
-      padding: 50px 25px 60px;
-      max-width: 720px;
-      margin: 0 auto;
-    }
+  <aside class="report" id="report" aria-live="polite">
+    <div class="report-head">
+      <span>Report</span>
+      <span id="report-id">no. ----</span>
+    </div>
 
-    .ascii-art {
-      font-family: monospace;
-      white-space: pre;
-      color: var(--accent-dark);
-      text-align: center;
-      margin-bottom: 40px;
-      background: var(--soft);
-      padding: 25px 30px;
-      border-radius: 12px;
-      border: 3px solid var(--accent);
-      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-      user-select: none;
-      font-size: 1.15rem;
-      letter-spacing: 1.5px;
-    }
+    <div class="report-empty" id="report-empty">
+<pre>
+  .-------------.
+  |  ~~~~~~~~   |
+  |  ~~~~~      |
+  |  ~~~~~~~~~  |
+  '-------------'</pre>
+      <p>Nothing analysed yet.<br />Your result will be typed up here.</p>
+    </div>
 
-    .button-row {
-      display: flex;
-      justify-content: center;
-      gap: 20px;
-      margin-bottom: 30px;
-    }
+    <div id="report-body" hidden>
+      <ul class="leaders">
+        <li><span class="k">model</span><span class="dots"></span><span class="v" id="r-model"></span></li>
+        <li><span class="k">scan</span><span class="dots"></span><span class="v" id="r-file"></span></li>
+        <li><span class="k">time</span><span class="dots"></span><span class="v" id="r-time"></span></li>
+      </ul>
 
-  .button-row > a,
-  .button-row > button {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    height: 44px;
-    width: 200px; /* fixed instead of min-width for perfect match */
-    box-sizing: border-box; /* ensure padding doesn't change size */
-    vertical-align: middle;
-    text-align: center;
-    padding: 0 28px;
-    font-weight: 700;
-    font-size: 1rem;
-    border-radius: 8px;
-    user-select: none;
-    box-shadow: 0 2px 6px rgba(184,132,92,0.4);
-    background: var(--accent);
-    color: white;
-    border: none;
-    cursor: pointer;
-    transition: background-color 0.3s ease, box-shadow 0.3s ease;
-    text-decoration: none;
-    line-height: 1;
-    margin: 0;
+      <div class="verdict">
+        <div class="label">Result</div>
+        <div class="value"><span id="r-pred"></span><small id="r-conf"></small></div>
+      </div>
+
+      <h3 class="section-title" style="font-size: 0.8rem;">All classes</h3>
+      <ul class="bars" id="r-bars"></ul>
+
+      <p class="note" id="r-note"></p>
+
+      <div class="report-actions">
+        <button class="btn ghost small" type="button" onclick="window.print()">Print</button>
+        <button class="btn ghost small" type="button" id="new-scan">New scan</button>
+      </div>
+    </div>
+  </aside>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  const imageInput = document.getElementById('image');
+  const dropZone = document.getElementById('drop-zone');
+  const preview = document.getElementById('image-preview');
+  const dropText = document.getElementById('drop-text');
+  const dropHint = document.getElementById('drop-hint');
+  const fileName = document.getElementById('file-name');
+  const submitBtn = document.getElementById('submit-btn');
+  const formError = document.getElementById('form-error');
+
+  const reportEmpty = document.getElementById('report-empty');
+  const reportBody = document.getElementById('report-body');
+
+  function selectedModel() {
+    return document.querySelector('input[name="mode"]:checked');
   }
 
+  function updateButton() {
+    submitBtn.disabled = !(selectedModel() && imageInput.files.length);
+  }
 
-    .button-row > a:hover,
-    .button-row > a:focus,
-    .button-row > button:hover,
-    .button-row > button:focus {
-      background-color: var(--accent-dark);
-      outline: none;
-      box-shadow: 0 4px 12px rgba(180,132,92,0.7);
-    }
+  document.querySelectorAll('input[name="mode"]').forEach(r => r.addEventListener('change', () => {
+    formError.textContent = '';
+    updateButton();
+  }));
 
-    label {
-      font-weight: 700;
-      font-size: 1rem;
-      margin-top: 30px;
-      margin-bottom: 8px;
-      display: block;
-    }
-
-    .dropdown {
-      position: relative;
-      user-select: none;
-      font-size: 1.1rem;
-      max-width: 100%;
-    }
-
-    .dropdown-header {
-      background: white;
-      border: 2.5px solid var(--accent);
-      border-radius: 8px;
-      padding: 14px 18px;
-      cursor: pointer;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      transition: border-color 0.3s ease, box-shadow 0.3s ease;
-      font-weight: 600;
-      color: var(--accent-dark);
-      box-shadow: 0 1px 3px rgba(0,0,0,0.08);
-    }
-
-    .dropdown-header:hover,
-    .dropdown.open .dropdown-header {
-      border-color: var(--accent-dark);
-      box-shadow: 0 0 12px rgba(184,132,92,0.5);
-    }
-
-    .dropdown-arrow {
-      font-weight: bold;
-      transition: transform 0.3s ease;
-      user-select: none;
-    }
-
-    .dropdown.open .dropdown-arrow {
-      transform: rotate(180deg);
-    }
-
-    .dropdown-list {
-      position: absolute;
-      top: 100%;
-      left: 0;
-      right: 0;
-      background: white;
-      border: 2.5px solid var(--accent);
-      border-top: none;
-      border-radius: 0 0 8px 8px;
-      max-height: 0;
-      overflow-y: auto;
-      opacity: 0;
-      transition: max-height 0.35s ease, opacity 0.35s ease;
-      z-index: 15;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-    }
-
-    .dropdown.open .dropdown-list {
-      max-height: 280px;
-      opacity: 1;
-    }
-
-    .dropdown-item {
-      padding: 14px 18px;
-      cursor: pointer;
-      transition: background-color 0.2s ease;
-      font-weight: 500;
-      color: var(--accent-dark);
-    }
-
-    .dropdown-item:hover,
-    .dropdown-item:focus {
-      background: #f3eadc;
-      outline: none;
-    }
-
-    .file-upload {
-      position: relative;
-      display: block;
-    }
-
-    .file-upload input[type="file"] {
-      display: none;
-    }
-
-    #drop-zone {
-      border: 2.5px dashed var(--accent);
-      border-radius: 8px;
-      padding: 30px 25px;
-      text-align: center;
-      transition: background-color 0.3s ease, border-color 0.3s ease;
-      cursor: pointer;
-      user-select: none;
-      position: relative;
-      margin-bottom: 4px;
-      font-weight: 600;
-      color: var(--accent-dark);
-      font-size: 1rem;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.06);
-      display: flex;
-      justify-content: center;
-      align-items: center;
-    }
-
-    #drop-zone.dragover {
-      background-color: #f0e4da;
-      border-color: var(--accent-dark);
-    }
-
-    .file-label {
-      background-color: var(--accent);
-      color: white;
-      border-radius: 8px;
-      cursor: pointer;
-      display: inline-block;
-      text-align: center;
-      font-size: 1.1rem;
-      font-weight: 700;
-      transition: background-color 0.3s ease;
-      user-select: none;
-      box-shadow: 0 3px 8px rgba(184,132,92,0.4);
-      width: 75%;
-      padding: 18px 0;
-    }
-
-    .file-label:hover,
-    .file-label:focus {
-      background-color: var(--accent-dark);
-      outline: none;
-      box-shadow: 0 5px 16px rgba(180,132,92,0.7);
-    }
-
-    .file-name {
-      margin-top: 12px;
-      font-style: italic;
-      font-size: 0.95rem;
-      color: var(--accent-dark);
-      user-select: text;
-      text-align: center;
-      word-break: break-word;
-    }
-
-    button {
-      display: block;
-      width: 100%;
-      background: var(--accent-dark);
-      color: white;
-      padding: 16px;
-      font-size: 1.15rem;
-      border: none;
-      border-radius: 10px;
-      margin-top: 30px;
-      cursor: pointer;
-      transition: background 0.3s ease, transform 0.1s ease;
-      font-weight: 700;
-      box-shadow: 0 3px 8px rgba(180,132,92,0.7);
-    }
-
-    button:hover:not(:disabled) {
-      background: #9a6845;
-    }
-
-    button:active:not(:disabled) {
-      transform: scale(0.97);
-    }
-
-    button:disabled {
-      opacity: 0.6;
-      cursor: not-allowed;
-    }
-
-    button.loading {
-      position: relative;
-      pointer-events: none;
-      opacity: 0.8;
-    }
-
-    button.loading::after {
-      content: "";
-      position: absolute;
-      right: 18px;
-      top: 50%;
-      width: 18px;
-      height: 18px;
-      margin-top: -9px;
-      border: 3px solid white;
-      border-top-color: transparent;
-      border-radius: 50%;
-      animation: spin 0.7s linear infinite;
-    }
-
-    .output {
-      margin-top: 30px;
-      background: var(--soft);
-      padding: 20px 25px;
-      border-radius: 10px;
-      border: 3px solid var(--accent);
-      font-size: 1rem;
-      box-shadow: 0 4px 10px rgba(0,0,0,0.07);
-      min-height: 85px;
-    }
-
-    .output strong {
-      color: var(--accent-dark);
-      font-weight: 700;
-    }
-
-    footer {
-      text-align: center;
-      padding: 15px 20px;
-      background: var(--accent-dark);
-      color: #fff;
-      margin-top: 50px;
-      font-size: 0.95rem;
-      letter-spacing: 1.5px;
-      user-select: none;
-    }
-
-    @media (max-width: 480px) {
-      main {
-        padding: 30px 15px 40px;
-        max-width: 90vw;
-      }
-
-      .ascii-art {
-        font-size: 1rem;
-        padding: 18px 20px;
-        margin-bottom: 30px;
-      }
-
-      button {
-        font-size: 1rem;
-        padding: 14px;
-        margin-top: 25px;
-      }
-
-      .file-label {
-        font-size: 1rem;
-        padding: 12px 0;
-        width: 75%;
-      }
-    }
-
-  </style>
-  <link rel="icon" href="/static/images/maia.ico" type="image/x-icon" />
-  </head>
-  <body>
-
-  <header>MAIA - Medical AI Assistant</header>
-
-  <main>
-    <div class="ascii-art" aria-label="MAIA logo in ASCII art">
-  <pre>
-  __  __    _    ___    _    
-  |  \/  |  /_\  |_ _|  /_\   
-  | |\/| | //_\\  | |  //_\\  
-  | |  | |/ ___ \ | | / ___ \ 
-  |_|  |_/_/   \_\___/_/   \_\
-  </pre>
-    </div>
-
-    <div class="button-row">
-      <a href="/info" class="info-link" tabindex="0">More Info about MAIA</a>
-      <a href="https://github.com/oliverbarnet/MAIA" class="github-link" tabindex="0" target="_blank" rel="noopener noreferrer">MAIA's GitHub</a>
-      <a href="/login" class="dashboard-link" tabindex="0">Admin Dashboard</a>
-      <button id="darkModeBtn" aria-pressed="false" aria-label="Toggle Dark Mode" type="button">
-        Dark Mode
-      </button>
-      
-    </div>
-    <label for="modeDropdownHeader">Select Model:</label>
-    <div class="dropdown" id="modeDropdown" role="listbox" aria-expanded="false" aria-labelledby="modeDropdownHeader">
-      <div class="dropdown-header" id="modeDropdownHeader" tabindex="0" aria-haspopup="listbox" aria-controls="modeDropdownList" aria-expanded="false">
-        <span id="dropdown-selected">Versions and Confidence</span>
-        <span class="dropdown-arrow" aria-hidden="true">▼</span>
-      </div>
-      <div class="dropdown-list" id="modeDropdownList" role="listbox" tabindex="-1">
-        <!-- Dynamically populated -->
-      </div>
-    </div>
-    <img id="image-preview" alt="Image preview" style="width: 720px; margin-top: 15px; display: none; border-radius: 8px; border: 2px solid var(--accent);" />
-
-    <label for="image">Upload Image:</label>
-    <div class="file-upload" id="drop-zone">
-      <input type="file" id="image" accept="image/*" aria-describedby="file-name" />
-      <label class="file-label" for="image" tabindex="0">Choose File</label>
-    </div>
-    <div id="file-name" class="file-name" aria-live="polite"></div>
-
-
-    <button id="submit-btn" type="button" onclick="submitClassification()">Submit</button>
-
-    <div class="output" id="output" aria-live="polite" aria-atomic="true">
-      <strong>Output:</strong>
-      <p id="mode-description">
-        Brain MRI Tumor Detector: V1, ~60-70% confidence<br>
-        MRI Brain Tumor Classifier: V1, ~97-100% confidence<br>
-        Alzheimer's Impairment Classifier: V2, ~60-75% confidence<br>
-        COVID-19 Detection: V1, ~97-100% confidence<br>
-        Fracture Detection: V1, ~70-75% confidence<br>
-        Eye Disease Classification: V1, ~90-100% confidence<br>
-        Pneumonia Detection: V1, ~70-100% confidence
-      </p>
-    </div>
-
-    
-  </main>
-
-  <footer>
-    &copy; 2025 MAIA Medical AI Interface
-  </footer>
-
-  <script>
-    const dropdown = document.getElementById('modeDropdown');
-    const selected = document.getElementById('dropdown-selected');
-    const description = document.getElementById('mode-description');
-    const imageInput = document.getElementById("image");
-    const output = document.getElementById("output");
-    const fileNameDisplay = document.getElementById("file-name");
-    const submitBtn = document.getElementById("submit-btn");
-    const modeDescriptions = {
-      1: "Displays the different versions of MAIA and their accuracy rates.",
-      2: "Detects the presence of brain tumors from MRI scans.",
-      3: "Classifies detected brain tumors into specific categories.",
-      4: "Identifies the level of cognitive impairment from Alzheimer's disease.",
-      5: "Detects COVID-19 from medical imaging.",
-      6: "Detects fractures in bones from medical imaging.",
-      7: "Classifies eye diseases from medical imaging.",
-      8: "Detects Pneumonia from medical imaging."
-    };
-    async function fetchEnabledModels() {
-      try {
-        const res = await fetch('/model_status');
-        if (!res.ok) throw new Error('Failed to fetch model status');
-        const status = await res.json();
-
-        const modelNames = {
-          '2': "Brain Tumor Detection",
-          '3': "Brain Tumor Classification",
-          '4': "Alzheimer's Impairment Classification",
-          '5': "COVID-19 Detection",
-          '6': "Fracture Detection",
-          '7': "Eye Disease Classification",
-          "8": "Pneumonia Detection"
-        };
-
-        const dropdownList = document.getElementById('modeDropdownList');
-        dropdownList.innerHTML = '';
-
-        // Add default option "Versions and confidence"
-        dropdownList.insertAdjacentHTML('beforeend',
-          `<div class="dropdown-item" role="option" data-value="1" tabindex="0">Versions and confidence</div>`);
-
-        // Add enabled models
-        for (const [id, enabled] of Object.entries(status)) {
-          if (enabled) {
-            const item = document.createElement('div');
-            item.classList.add('dropdown-item');
-            item.setAttribute('role', 'option');
-            item.setAttribute('data-value', id);
-            item.setAttribute('tabindex', '0');
-            item.textContent = modelNames[id] || `Model ${id}`;
-            dropdownList.appendChild(item);
-
-            item.addEventListener('click', () => selectMode(item));
-            item.addEventListener('keydown', (e) => {
-              if (e.key === 'Enter' || e.key === ' ') {
-                e.preventDefault();
-                selectMode(item);
-              }
-            });
-          }
-        }
-      } catch (e) {
-        console.error("Failed to load enabled models:", e);
-      }
-    }
-
-    // Dropdown toggle logic
-    dropdown.querySelector('.dropdown-header').addEventListener('click', () => {
-      const isOpen = dropdown.classList.toggle('open');
-      dropdown.setAttribute('aria-expanded', isOpen);
-      dropdown.querySelector('.dropdown-header').setAttribute('aria-expanded', isOpen);
-    });
-
-    dropdown.querySelector('.dropdown-header').addEventListener('keydown', (e) => {
-      if(e.key === "Enter" || e.key === " "){
-        e.preventDefault();
-        dropdown.classList.toggle('open');
-        const isOpen = dropdown.classList.contains('open');
-        dropdown.setAttribute('aria-expanded', isOpen);
-        dropdown.querySelector('.dropdown-header').setAttribute('aria-expanded', isOpen);
-      }
-    });
-
-    function selectMode(item) {
-      selected.textContent = item.textContent;
-      description.textContent = modeDescriptions[item.dataset.value] || '';
-      dropdown.classList.remove('open');
-      dropdown.dataset.value = item.dataset.value;
-      dropdown.setAttribute('aria-expanded', false);
-      dropdown.querySelector('.dropdown-header').setAttribute('aria-expanded', false);
-    }
-
-    // Show selected file name
-    imageInput.addEventListener('change', () => {
-      if (imageInput.files.length > 0) {
-        fileNameDisplay.textContent = `Selected file: ${imageInput.files[0].name}`;
-      } else {
-        fileNameDisplay.textContent = '';
-      }
-    });
-
-    imageInput.addEventListener('change', () => {
-  if (imageInput.files.length > 0) {
+  // Show the chosen file inside the drop zone
+  imageInput.addEventListener('change', () => {
+    formError.textContent = '';
     const file = imageInput.files[0];
-    fileNameDisplay.textContent = `Selected file: ${file.name}`;
-
-    const preview = document.getElementById('image-preview');
-    const reader = new FileReader();
-
-    reader.onload = function(e) {
-      preview.src = e.target.result;
-      preview.style.display = 'block';
-    };
-
-    reader.readAsDataURL(file);
-  } else {
-    fileNameDisplay.textContent = '';
-    const preview = document.getElementById('image-preview');
-    preview.src = '';
-    preview.style.display = 'none';
-  }
-});
-
-
-    // Drag & Drop handlers
-    const dropZone = document.getElementById('drop-zone');
-    dropZone.addEventListener('dragover', (e) => {
-      e.preventDefault();
-      dropZone.classList.add('dragover');
-    });
-    dropZone.addEventListener('dragleave', (e) => {
-      e.preventDefault();
-      dropZone.classList.remove('dragover');
-    });
-    dropZone.addEventListener('drop', (e) => {
-      e.preventDefault();
-      dropZone.classList.remove('dragover');
-      if(e.dataTransfer.files.length > 0){
-        imageInput.files = e.dataTransfer.files;
-        const event = new Event('change');
-        imageInput.dispatchEvent(event);
-      }
-    });
-
-    // Dark mode toggle
-    const darkModeBtn = document.getElementById('darkModeBtn');
-    darkModeBtn.addEventListener('click', () => {
-      document.body.classList.toggle('dark');
-      const isDark = document.body.classList.contains('dark');
-      darkModeBtn.setAttribute('aria-pressed', isDark);
-      darkModeBtn.textContent = isDark ? 'Light Mode' : 'Dark Mode';
-    });
-
-    async function submitClassification() {
-      if (imageInput.files.length === 0) {
-        alert("Please upload an image first.");
-        return;
-      }
-
-      const mode = dropdown.dataset.value;
-      if (!mode || mode === "1") {
-        alert("Please select a valid mode.");
-        return;
-      }
-
-      submitBtn.disabled = true;
-      submitBtn.classList.add('loading');
-      output.innerHTML = '<strong>Output:</strong><p>Processing...</p>';
-
-      const formData = new FormData();
-      formData.append('image', imageInput.files[0]);
-      formData.append('mode', mode);
-
-      try {
-        const response = await fetch('/classify', {
-          method: 'POST',
-          body: formData,
-        });
-
-        if (!response.ok) {
-          const errorData = await response.json();
-          output.innerHTML = `<strong>Error:</strong> <p>${errorData.error || 'Unknown error'}</p>`;
-        } else {
-          const data = await response.json();
-          output.innerHTML = `<strong>Prediction:</strong> <p>${data.prediction} (Confidence: ${data.confidence})</p>`;
-        }
-      } catch (error) {
-        output.innerHTML = `<strong>Error:</strong> <p>${error.message}</p>`;
-      } finally {
-        submitBtn.disabled = false;
-        submitBtn.classList.remove('loading');
-      }
+    if (!file) {
+      preview.hidden = true;
+      preview.removeAttribute('src');
+      dropZone.classList.remove('has-image');
+      dropText.hidden = false;
+      dropHint.hidden = false;
+      fileName.textContent = '';
+      updateButton();
+      return;
     }
 
-    // Initialize dropdown options from server
-    fetchEnabledModels();
+    const reader = new FileReader();
+    reader.onload = e => {
+      preview.src = e.target.result;
+      preview.hidden = false;
+      dropZone.classList.add('has-image');
+      dropText.hidden = true;
+      dropHint.hidden = true;
+    };
+    reader.readAsDataURL(file);
+    fileName.textContent = file.name + ' (click to change)';
+    updateButton();
+  });
 
-  </script>
+  // Drag & drop
+  ['dragenter', 'dragover'].forEach(ev => dropZone.addEventListener(ev, e => {
+    e.preventDefault();
+    dropZone.classList.add('dragover');
+  }));
+  ['dragleave', 'drop'].forEach(ev => dropZone.addEventListener(ev, e => {
+    e.preventDefault();
+    dropZone.classList.remove('dragover');
+  }));
+  dropZone.addEventListener('drop', e => {
+    if (e.dataTransfer.files.length > 0) {
+      imageInput.files = e.dataTransfer.files;
+      imageInput.dispatchEvent(new Event('change'));
+    }
+  });
 
-  </body>
-  </html>
+  function showResult(data, scanType) {
+    document.getElementById('report-id').textContent = 'no. ' + Math.random().toString(16).slice(2, 6).toUpperCase();
+    document.getElementById('r-model').textContent = data.model;
+    document.getElementById('r-file').textContent = data.filename;
+    document.getElementById('r-time').textContent = data.time;
+    document.getElementById('r-pred').textContent = data.prediction;
+    document.getElementById('r-conf').textContent = data.confidence;
+
+    const bars = document.getElementById('r-bars');
+    bars.innerHTML = '';
+    for (const s of data.scores) {
+      const li = document.createElement('li');
+      const name = document.createElement('span');
+      name.textContent = s.label;
+      const track = document.createElement('span');
+      track.className = 'track';
+      const fill = document.createElement('span');
+      fill.className = 'fill';
+      track.appendChild(fill);
+      const pct = document.createElement('span');
+      pct.className = 'pct';
+      pct.textContent = (s.p * 100).toFixed(1) + '%';
+      li.append(name, track, pct);
+      bars.appendChild(li);
+      // let the bar grow in after it's on the page
+      requestAnimationFrame(() => requestAnimationFrame(() => { fill.style.width = (s.p * 100) + '%'; }));
+    }
+
+    const note = document.getElementById('r-note');
+    const top = data.scores[0].p;
+    if (top < 0.6) {
+      note.className = 'note warn';
+      note.textContent = "MAIA isn't sure about this one. The top two answers are close, so don't read much into it.";
+    } else {
+      note.className = 'note';
+      note.textContent = `This model only knows ${scanType.toLowerCase()} images. Give it anything else (a photo of a dog, say) and it will still pick an answer, so check you used the right model.`;
+    }
+
+    reportEmpty.hidden = true;
+    reportBody.hidden = false;
+  }
+
+  submitBtn.addEventListener('click', async () => {
+    const model = selectedModel();
+    if (!model || !imageInput.files.length) return;
+
+    formError.textContent = '';
+    submitBtn.disabled = true;
+    submitBtn.classList.add('loading');
+    submitBtn.firstChild.textContent = 'Analyzing';
+
+    const formData = new FormData();
+    formData.append('image', imageInput.files[0]);
+    formData.append('mode', model.value);
+
+    try {
+      const res = await fetch('/classify', { method: 'POST', body: formData });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        formError.textContent = data.error || 'Something went wrong on the server.';
+      } else {
+        showResult(data, model.dataset.scan);
+        if (window.innerWidth <= 860) document.getElementById('report').scrollIntoView({ behavior: 'smooth' });
+      }
+    } catch (err) {
+      formError.textContent = "Couldn't reach MAIA. Is app.py still running?";
+    } finally {
+      submitBtn.classList.remove('loading');
+      submitBtn.firstChild.textContent = 'Analyze scan';
+      updateButton();
+    }
+  });
+
+  document.getElementById('new-scan').addEventListener('click', () => {
+    imageInput.value = '';
+    imageInput.dispatchEvent(new Event('change'));
+    reportBody.hidden = true;
+    reportEmpty.hidden = false;
+    document.getElementById('report-id').textContent = 'no. ----';
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  });
+</script>
+{% endblock %}
