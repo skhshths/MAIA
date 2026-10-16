@@ -1,0 +1,142 @@
+{
+  "labels": [
+    "glioma",
+    "meningioma",
+    "none",
+    "pituitary"
+  ],
+  "best_val_balanced_acc": 0.9639006792847764,
+  "epochs": [
+    {
+      "epoch": 1,
+      "train_loss": 1.3854353061089149,
+      "val_loss": 1.2421257641850685,
+      "val_acc": 0.6793002915451894,
+      "val_balanced_acc": 0.6763826851495315,
+      "secs": 167
+    },
+    {
+      "epoch": 2,
+      "train_loss": 0.935054207765139,
+      "val_loss": 0.5030461539332443,
+      "val_acc": 0.8396501457725948,
+      "val_balanced_acc": 0.8491722204121126,
+      "secs": 167
+    },
+    {
+      "epoch": 3,
+      "train_loss": 0.6511018404593835,
+      "val_loss": 0.7387364890763085,
+      "val_acc": 0.6793002915451894,
+      "val_balanced_acc": 0.7275057758952638,
+      "secs": 146
+    },
+    {
+      "epoch": 4,
+      "train_loss": 0.5662147201024569,
+      "val_loss": 0.3938944040860101,
+      "val_acc": 0.892128279883382,
+      "val_balanced_acc": 0.9082123604158645,
+      "secs": 157
+    },
+    {
+      "epoch": 5,
+      "train_loss": 0.5265835954592778,
+      "val_loss": 0.27693167372278155,
+      "val_acc": 0.9125364431486881,
+      "val_balanced_acc": 0.9271784751636505,
+      "secs": 143
+    },
+    {
+      "epoch": 6,
+      "train_loss": 0.49725795617470375,
+      "val_loss": 0.25179092182014845,
+      "val_acc": 0.9446064139941691,
+      "val_balanced_acc": 0.9539430111667309,
+      "secs": 150
+    },
+    {
+      "epoch": 7,
+      "train_loss": 0.4703288348821493,
+      "val_loss": 0.2371431384072707,
+      "val_acc": 0.9591836734693877,
+      "val_balanced_acc": 0.9618762279948264,
+      "secs": 150
+    },
+    {
+      "epoch": 8,
+      "train_loss": 0.4566283436921927,
+      "val_loss": 0.2503900354179627,
+      "val_acc": 0.9446064139941691,
+      "val_balanced_acc": 0.9520687331536388,
+      "secs": 183
+    },
+    {
+      "epoch": 9,
+      "train_loss": 0.4507734321630918,
+      "val_loss": 0.23749441377623087,
+      "val_acc": 0.9416909620991254,
+      "val_balanced_acc": 0.9509674624566808,
+      "secs": 152
+    },
+    {
+      "epoch": 10,
+      "train_loss": 0.4395858856347891,
+      "val_loss": 0.24414534610492494,
+      "val_acc": 0.9475218658892128,
+      "val_balanced_acc": 0.9557354639969196,
+      "secs": 196
+    },
+    {
+      "epoch": 11,
+      "train_loss": 0.4359234314698439,
+      "val_loss": 0.2218153747803268,
+      "val_acc": 0.9620991253644315,
+      "val_balanced_acc": 0.9639006792847764,
+      "secs": 142
+    },
+    {
+      "epoch": 12,
+      "train_loss": 0.4287905881038079,
+      "val_loss": 0.23012673611543616,
+      "val_acc": 0.9533527696793003,
+      "val_balanced_acc": 0.9564911683105753,
+      "secs": 146
+    },
+    {
+      "epoch": 13,
+      "train_loss": 0.43188853080456074,
+      "val_loss": 0.21886368326125966,
+      "val_acc": 0.956268221574344,
+      "val_balanced_acc": 0.9591836981527009,
+      "secs": 144
+    },
+    {
+      "epoch": 14,
+      "train_loss": 0.43505296890552225,
+      "val_loss": 0.21787366575124312,
+      "val_acc": 0.956268221574344,
+      "val_balanced_acc": 0.9591836981527009,
+      "secs": 144
+    },
+    {
+      "epoch": 15,
+      "train_loss": 0.4271995613208184,
+      "val_loss": 0.21904956912160267,
+      "val_acc": 0.9533527696793003,
+      "val_balanced_acc": 0.9566326777445375,
+      "secs": 146
+    }
+  ],
+  "args": {
+    "data": "data/tumor_classification",
+    "labels": "/home/user/MAIA/models/tumor_classification/labels.txt",
+    "out": "runs/tumor_classification",
+    "weights": "resnet18_a1_0-d63eafa0.pth",
+    "epochs": 15,
+    "batch": 32,
+    "lr": 0.0005,
+    "workers": 2,
+    "seed": 0
+  }
+}

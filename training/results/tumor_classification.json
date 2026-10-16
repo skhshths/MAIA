@@ -1,0 +1,117 @@
+{
+  "test_images": 430,
+  "labels": [
+    "glioma",
+    "meningioma",
+    "none",
+    "pituitary"
+  ],
+  "results": {
+    "old": {
+      "accuracy": 0.9558139534883721,
+      "balanced_accuracy": 0.9567485438334512,
+      "macro_f1": 0.9495286432718106,
+      "per_class": {
+        "glioma": {
+          "precision": 0.9841269841269841,
+          "recall": 0.9323308270676691,
+          "support": 133
+        },
+        "meningioma": {
+          "precision": 0.9296875,
+          "recall": 0.967479674796748,
+          "support": 123
+        },
+        "none": {
+          "precision": 0.8703703703703703,
+          "recall": 0.9591836734693877,
+          "support": 49
+        },
+        "pituitary": {
+          "precision": 0.9918032786885246,
+          "recall": 0.968,
+          "support": 125
+        }
+      },
+      "confusion": [
+        [
+          124,
+          6,
+          3,
+          0
+        ],
+        [
+          1,
+          119,
+          3,
+          0
+        ],
+        [
+          1,
+          0,
+          47,
+          1
+        ],
+        [
+          0,
+          3,
+          1,
+          121
+        ]
+      ]
+    },
+    "new": {
+      "accuracy": 0.9488372093023256,
+      "balanced_accuracy": 0.9438356169168566,
+      "macro_f1": 0.9453251276807657,
+      "per_class": {
+        "glioma": {
+          "precision": 0.9411764705882353,
+          "recall": 0.9624060150375939,
+          "support": 133
+        },
+        "meningioma": {
+          "precision": 0.9491525423728814,
+          "recall": 0.9105691056910569,
+          "support": 123
+        },
+        "none": {
+          "precision": 0.9375,
+          "recall": 0.9183673469387755,
+          "support": 49
+        },
+        "pituitary": {
+          "precision": 0.9609375,
+          "recall": 0.984,
+          "support": 125
+        }
+      },
+      "confusion": [
+        [
+          128,
+          3,
+          2,
+          0
+        ],
+        [
+          7,
+          112,
+          1,
+          3
+        ],
+        [
+          1,
+          1,
+          45,
+          2
+        ],
+        [
+          0,
+          2,
+          0,
+          123
+        ]
+      ]
+    }
+  }
+}

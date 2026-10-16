@@ -43,6 +43,8 @@ MAIA (Medical Artificial Intelligence Assistant) is a web-based platform that us
 
 On the sample eye images in `uploads/`, the eye model used to call every image "diabetic retinopathy". It now gets the glaucoma and cataract samples right.
 
+**Retrained brain tumor detection (V2).** It makes half as many mistakes as V1 on the same clean test set: 98.6% accuracy, 97.4% balanced. The brain tumor classifier was retrained too, but the new version didn't beat the old one, so V1 stays. Details are in [Retraining results](#retraining-results).
+
 **Other bug fixes**
 - Label files were looked up under the wrong folder names (`models/brain_tumor_detection/...`), so results showed a class number instead of a name.
 - The home page loaded its model list from an admin-only endpoint, so the dropdown was empty unless you were logged in.
@@ -101,8 +103,8 @@ All seven are ResNet-18 image classifiers that take a 224×224 RGB image. They'r
 
 | Model | id | Scan | Classes | Version | Clean test result |
 |---|---|---|---|---|---|
-| Brain Tumor Detection | `tumor_detection` | Brain MRI | no, yes | V1 | 93.8% balanced acc. |
-| Brain Tumor Classification | `tumor_classification` | Brain MRI | glioma, meningioma, none, pituitary | V1 | 95.6% accuracy |
+| Brain Tumor Detection | `tumor_detection` | Brain MRI | no, yes | V2 | 98.6% acc. / 97.4% balanced |
+| Brain Tumor Classification | `tumor_classification` | Brain MRI | glioma, meningioma, none, pituitary | V1 | 95.6% acc.* |
 | Alzheimer's Classification | `alzheimers` | Brain MRI | mild, moderate, none, verymild | V2 | not measured |
 | COVID-19 Detection | `covid` | Chest X-ray | covid, nocovid | V1 | not measured |
 | Pneumonia Detection | `pneumonia` | Chest X-ray | NORMAL, PNEUMONIA | V1 | not measured |
@@ -111,7 +113,38 @@ All seven are ResNet-18 image classifiers that take a 224×224 RGB image. They'r
 
 "Not measured" means there was no clean held-out test set to check that model against. The datasets for those five live on Kaggle, Mendeley, Zenodo and Figshare. That's covered in [Retraining a model](#retraining-a-model).
 
-<!-- RESULTS -->
+\* The V1 models weren't trained by these scripts, so we can't be sure they never saw the test images. Their scores may be flattering; see below.
+
+### Retraining results
+
+Both brain tumor models were retrained with `training/train.py` (15 epochs, CPU) and scored with `training/evaluate.py`. The test set was the same 430 de-duplicated images the new models never saw. Raw numbers are in `training/results/`.
+
+**Brain Tumor Detection: V2 replaces V1**
+
+| | V1 (old) | V2 (new) |
+|---|---|---|
+| Accuracy | 97.0% | **98.6%** |
+| Balanced accuracy | 93.8% | **97.4%** |
+| Healthy scans correctly cleared | 44 / 49 (90%) | **47 / 49 (96%)** |
+| Tumors caught | 373 / 381 (97.9%) | **377 / 381 (99.0%)** |
+| Total mistakes | 13 | **6** |
+
+V2 wins on every measure. On the 15 images where the two models disagree, V2 is right on 11 and V1 on 4. That's a clear lean, but with so few disagreements it isn't statistically conclusive (exact McNemar test, p = 0.12).
+
+**Brain Tumor Classification: V1 kept**
+
+| | V1 (old, kept) | Retrained candidate |
+|---|---|---|
+| Accuracy | **95.6%** | 94.9% |
+| Balanced accuracy | **95.7%** | 94.4% |
+| Glioma recall | 93% | **96%** |
+| Meningioma recall | **97%** | 91% |
+
+The retrained model was slightly behind overall (3 more mistakes out of 430), so it wasn't swapped in.
+
+There's a caveat. 417 of the 430 test images originally come from the dataset's "Training" folder, and V1 was very likely trained on that folder. On the 13 test images from the dataset's "Testing" folder, which V1 is less likely to have seen, the result flips: V1 got 46% right, the candidate 69%. Thirteen images is too few to conclude anything. A clean comparison needs a brain MRI test set from a different source, such as Figshare (Cheng 2017) or BRISC 2025, which weren't reachable when these models were trained.
+
+**What didn't change:** the Alzheimer's, COVID-19, pneumonia, fracture and eye models are the same files as v2.0.2. They benefit from the normalisation fix, but there was no clean test data to measure them on.
 
 ---
 
@@ -338,5 +371,5 @@ These hosts weren't reachable from the environment the 2.1 models were trained i
 
 ## Changelog
 
-- **2.1.0:** fixed missing input normalisation (large accuracy gain on every model); fixed label loading, public model list, filename safety and secret key; redesigned all pages; added training / evaluation scripts; detailed README.
+- **2.1.0:** fixed missing input normalisation (large accuracy gain on every model); brain tumor detection retrained (V2, half the mistakes of V1); fixed label loading, public model list, filename safety and secret key; redesigned all pages; added training / evaluation scripts; detailed README.
 - **2.0.2:** previous release.

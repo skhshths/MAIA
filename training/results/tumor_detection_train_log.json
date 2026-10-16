@@ -1,0 +1,140 @@
+{
+  "labels": [
+    "no",
+    "yes"
+  ],
+  "best_val_balanced_acc": 0.9967105263157895,
+  "epochs": [
+    {
+      "epoch": 1,
+      "train_loss": 0.760189727636484,
+      "val_loss": 0.6610010024757497,
+      "val_acc": 0.6588921282798834,
+      "val_balanced_acc": 0.8075657894736843,
+      "secs": 244
+    },
+    {
+      "epoch": 2,
+      "train_loss": 0.5862159953667567,
+      "val_loss": 0.6576436824075682,
+      "val_acc": 0.6180758017492711,
+      "val_balanced_acc": 0.7845394736842105,
+      "secs": 144
+    },
+    {
+      "epoch": 3,
+      "train_loss": 0.5179776613528911,
+      "val_loss": 0.3635941497090954,
+      "val_acc": 0.9591836734693877,
+      "val_balanced_acc": 0.9769736842105263,
+      "secs": 142
+    },
+    {
+      "epoch": 4,
+      "train_loss": 0.5178528304283435,
+      "val_loss": 0.46719999007511415,
+      "val_acc": 0.8862973760932945,
+      "val_balanced_acc": 0.9358552631578947,
+      "secs": 140
+    },
+    {
+      "epoch": 5,
+      "train_loss": 0.4926744034657112,
+      "val_loss": 0.618048120170571,
+      "val_acc": 0.7405247813411079,
+      "val_balanced_acc": 0.8536184210526316,
+      "secs": 144
+    },
+    {
+      "epoch": 6,
+      "train_loss": 0.47088752664052524,
+      "val_loss": 0.3468993996044637,
+      "val_acc": 0.967930029154519,
+      "val_balanced_acc": 0.981907894736842,
+      "secs": 139
+    },
+    {
+      "epoch": 7,
+      "train_loss": 0.4643753899977757,
+      "val_loss": 0.3159229484313431,
+      "val_acc": 0.9737609329446064,
+      "val_balanced_acc": 0.9851973684210527,
+      "secs": 140
+    },
+    {
+      "epoch": 8,
+      "train_loss": 0.4664096910219926,
+      "val_loss": 0.3339595989305146,
+      "val_acc": 0.9766763848396501,
+      "val_balanced_acc": 0.986842105263158,
+      "secs": 137
+    },
+    {
+      "epoch": 9,
+      "train_loss": 0.45499666103949915,
+      "val_loss": 0.3290352237467863,
+      "val_acc": 0.9825072886297376,
+      "val_balanced_acc": 0.9901315789473684,
+      "secs": 143
+    },
+    {
+      "epoch": 10,
+      "train_loss": 0.4573329182771536,
+      "val_loss": 0.328606367806304,
+      "val_acc": 0.9912536443148688,
+      "val_balanced_acc": 0.9950657894736843,
+      "secs": 144
+    },
+    {
+      "epoch": 11,
+      "train_loss": 0.4569168829000913,
+      "val_loss": 0.33114725646750226,
+      "val_acc": 0.9854227405247813,
+      "val_balanced_acc": 0.9917763157894737,
+      "secs": 135
+    },
+    {
+      "epoch": 12,
+      "train_loss": 0.4489505731142484,
+      "val_loss": 0.32247069973292225,
+      "val_acc": 0.9941690962099126,
+      "val_balanced_acc": 0.9967105263157895,
+      "secs": 138
+    },
+    {
+      "epoch": 13,
+      "train_loss": 0.44476927243746245,
+      "val_loss": 0.3265092783002047,
+      "val_acc": 0.9883381924198251,
+      "val_balanced_acc": 0.993421052631579,
+      "secs": 144
+    },
+    {
+      "epoch": 14,
+      "train_loss": 0.4558337025917493,
+      "val_loss": 0.32717929011531194,
+      "val_acc": 0.9883381924198251,
+      "val_balanced_acc": 0.993421052631579,
+      "secs": 146
+    },
+    {
+      "epoch": 15,
+      "train_loss": 0.4523264774909386,
+      "val_loss": 0.3210483667801838,
+      "val_acc": 0.9912536443148688,
+      "val_balanced_acc": 0.9950657894736843,
+      "secs": 142
+    }
+  ],
+  "args": {
+    "data": "data/tumor_detection",
+    "labels": "/home/user/MAIA/models/tumor_detection/labels.txt",
+    "out": "runs/tumor_detection",
+    "weights": "resnet18_a1_0-d63eafa0.pth",
+    "epochs": 15,
+    "batch": 32,
+    "lr": 0.0005,
+    "workers": 2,
+    "seed": 0
+  }
+}

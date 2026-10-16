@@ -42,7 +42,8 @@ MODELS = [
         "name": "Brain Tumor Detection",
         "scan": "Brain MRI",
         "about": "Checks a brain MRI slice for the presence of a tumor.",
-        "version": "V1",
+        "version": "V2",
+        "accuracy": "98.6% (97.4% balanced)",
         "pretty": {"no": "No tumor found", "yes": "Tumor present"},
     },
     {
@@ -51,6 +52,7 @@ MODELS = [
         "scan": "Brain MRI",
         "about": "Sorts a brain MRI slice into glioma, meningioma, pituitary tumor or no tumor.",
         "version": "V1",
+        "accuracy": "95.6%",
         "pretty": {"glioma": "Glioma", "meningioma": "Meningioma", "none": "No tumor", "pituitary": "Pituitary tumor"},
     },
     {
