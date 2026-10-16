@@ -35,7 +35,7 @@ MODELS = [
         "name": "Brain Tumor Detection",
         "scan": "Brain MRI",
         "about": "Checks a brain MRI slice for the presence of a tumor.",
-        "version": "V2",
+        "version": "V1",
         "pretty": {"no": "No tumor found", "yes": "Tumor present"},
     },
     {
@@ -43,7 +43,7 @@ MODELS = [
         "name": "Brain Tumor Classification",
         "scan": "Brain MRI",
         "about": "Sorts a brain MRI slice into glioma, meningioma, pituitary tumor or no tumor.",
-        "version": "V2",
+        "version": "V1",
         "pretty": {"glioma": "Glioma", "meningioma": "Meningioma", "none": "No tumor", "pituitary": "Pituitary tumor"},
     },
     {
