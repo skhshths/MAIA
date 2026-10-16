@@ -1,0 +1,27 @@
+# Render Blueprint: runs MAIA as one free web service.
+# In Render: New + > Blueprint > pick this repo. See "Hosting MAIA for free" in README.md.
+services:
+  - type: web
+    name: maia
+    runtime: python
+    plan: free
+    buildCommand: pip install -r requirements.txt
+    # One worker: history and model on/off switches live in memory and must be shared
+    startCommand: gunicorn -w 1 --threads 2 --timeout 120 -b 0.0.0.0:$PORT app:app
+    healthCheckPath: /models
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.12.7
+      # Render asks you for this when you create the Blueprint
+      - key: MAIA_PASSWORD
+        sync: false
+      - key: MAIA_SECRET_KEY
+        generateValue: true
+      # The free plan has 512 MB of RAM: keep 2 models loaded, load the rest on demand
+      - key: MAIA_MAX_LOADED
+        value: "2"
+      - key: MALLOC_ARENA_MAX
+        value: "2"
+      # Public server: don't keep strangers' scans on disk
+      - key: MAIA_KEEP_UPLOADS
+        value: "0"

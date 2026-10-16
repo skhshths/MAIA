@@ -46,7 +46,7 @@ def test_pages_load(client):
 
 def test_every_model_has_labels_matching_its_output():
     for m in maia.MODELS:
-        out = m["session"].get_outputs()[0].shape[-1]
+        out = maia.get_session(m["id"]).get_outputs()[0].shape[-1]
         assert len(m["labels"]) == out, m["id"]
         assert set(m["pretty"]) == set(m["labels"]), m["id"]
 
@@ -93,7 +93,10 @@ def test_upload_name_cannot_escape_folder(client, tmp_path):
     r = client.post("/classify", data={"mode": "EDC", "image": (png_bytes(), "../../evil.png")})
     assert r.status_code == 200
     saved = os.listdir(tmp_path)
-    assert len(saved) == 1 and saved[0].endswith("evil.png") and "/" not in saved[0]
+    if maia.KEEP_UPLOADS:
+        assert len(saved) == 1 and saved[0].endswith("evil.png") and "/" not in saved[0]
+    else:
+        assert saved == []  # deleted straight after analysis
     assert not os.path.exists(os.path.join(tmp_path, "..", "..", "evil.png"))
 
 

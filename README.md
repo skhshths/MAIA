@@ -22,6 +22,7 @@ MAIA (Medical Artificial Intelligence Assistant) is a web-based platform that us
 - [The models](#the-models)
 - [Admin dashboard](#admin-dashboard)
 - [Configuration](#configuration)
+- [Hosting MAIA for free](#hosting-maia-for-free)
 - [Project layout](#project-layout)
 - [How a scan is processed](#how-a-scan-is-processed)
 - [HTTP API](#http-api)
@@ -135,10 +136,42 @@ Everything is optional and set through environment variables:
 | `MAIA_PASSWORD` | `81412` | Dashboard password |
 | `MAIA_SECRET_KEY` | random on each start | Signs the login cookie. Set it if you want logins to survive a restart. |
 | `PORT` | `5000` | Port to listen on |
+| `MAIA_MAX_LOADED` | `0` (all) | How many models to keep in memory at once. `0` loads all seven at startup (~600 MB RAM, fastest). `2` loads models on demand and keeps the two most recently used (about 370 MB at peak). Each switch to a model that isn't loaded costs about a third of a second. |
+| `MAIA_KEEP_UPLOADS` | `1` | `0` deletes each scan straight after it's analysed. Use this on any public server. |
 
 ```bash
 MAIA_PASSWORD='something-better' MAIA_SECRET_KEY="$(python3 -c 'import secrets;print(secrets.token_hex(32))')" python3 app.py
 ```
+
+---
+
+## Hosting MAIA for free
+
+MAIA runs on [Render](https://render.com)'s free plan. The repo already contains the config (`render.yaml`), so setup takes about five minutes. The free plan usually doesn't need a credit card. Render sometimes asks for one as an anti-fraud check, which places a $1 hold that is reversed straight away.
+
+**Why Render?** As of October 2026, Hugging Face Spaces requires a paid plan for Docker and CPU Gradio apps. Render, Koyeb and similar hosts give 512 MB of RAM for free. MAIA normally uses ~600 MB with every model loaded, so `render.yaml` turns on low-memory mode (`MAIA_MAX_LOADED=2`). In a load test (84 scans, 4 at a time, cycling through all seven models, the same gunicorn settings as `render.yaml`), memory peaked at about 370 MB and every request succeeded.
+
+### Steps
+
+1. Sign up at <https://dashboard.render.com/register>. Choose **GitHub** so Render can see your repos.
+2. Click **New +** → **Blueprint**.
+3. Pick the MAIA repository. If it isn't listed, click **Configure account** and give Render access to it.
+4. Set **Branch** to the branch that contains `render.yaml`.
+5. Render reads `render.yaml` and shows one service called `maia`. It asks for **`MAIA_PASSWORD`**: type the dashboard password you want. Don't reuse `81412`, because it's in this README.
+6. Click **Apply** (or **Deploy Blueprint**). The first build takes a few minutes while it installs packages and pulls the ~300 MB of models.
+7. When the status turns **Live**, your site is at `https://maia-xxxx.onrender.com` (shown at the top of the service page).
+
+Every push to that branch redeploys automatically.
+
+### What to expect on the free plan
+
+- **It sleeps.** After 15 minutes with no visitors the service spins down. The next visitor waits about a minute while it wakes up, then it's normal speed.
+- **750 free hours a month** per account. That's enough to run one service all month.
+- **Memory is reset on restart.** That includes the dashboard history and any models you switched off.
+- **Scans are not stored.** `MAIA_KEEP_UPLOADS=0` deletes each image straight after analysis.
+- **The first scan with each model is slower**, about a third of a second, because only two models stay loaded. After that it's quick.
+
+To change a setting later: open the service on Render → **Environment** → edit → **Save changes**. Render redeploys on its own.
 
 ---
 
@@ -148,6 +181,7 @@ MAIA_PASSWORD='something-better' MAIA_SECRET_KEY="$(python3 -c 'import secrets;p
 MAIA/
 ├── app.py                  Flask app: routes, model loading, inference
 ├── requirements.txt        What the web app needs
+├── render.yaml             One-click config for free hosting on Render
 ├── models/
 │   └── <id>/
 │       ├── resnet18.onnx   The model

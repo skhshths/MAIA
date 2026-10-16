@@ -2,3 +2,4 @@ flask>=2.3
 onnxruntime>=1.16
 numpy>=1.24
 pillow>=10.0
+gunicorn>=22.0; platform_system != "Windows"

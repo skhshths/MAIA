@@ -35,7 +35,11 @@
   <p>Every model will give an answer for any picture you give it, even a photo of an apple. Always pick the model that matches the scan.</p>
 
   <h2>Your images</h2>
+  {% if keep_uploads %}
   <p>Uploaded images are saved in the <code>uploads/</code> folder on the machine running MAIA, and the last 15 results show up on the admin dashboard. Anyone with access to that machine can see them, so don't upload anything you wouldn't want stored.</p>
+  {% else %}
+  <p>This copy of MAIA deletes each image as soon as it has been analysed. Only the result (model, file name, prediction and confidence) is kept, in memory, for the last 15 scans on the admin dashboard. Even so, don't upload anything with a patient's name or details on it.</p>
+  {% endif %}
 
   <h2>Please note</h2>
   <p>MAIA is a learning project. It has not been clinically validated and must not be used to make medical decisions. If you're worried about a scan, talk to a doctor.</p>

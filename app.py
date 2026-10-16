@@ -1,11 +1,13 @@
 from flask import Flask, render_template, request, jsonify, redirect, url_for, session
 from werkzeug.utils import secure_filename
-from collections import deque
+from collections import deque, OrderedDict
 from datetime import datetime
 from PIL import Image, UnidentifiedImageError
 import onnxruntime as ort
 import numpy as np
+import ctypes
 import secrets
+import threading
 import uuid
 import os
 
@@ -18,6 +20,11 @@ app.config["MAX_CONTENT_LENGTH"] = 16 * 1024 * 1024  # 16 MB per scan
 app.secret_key = os.environ.get("MAIA_SECRET_KEY") or secrets.token_hex(32)
 
 DASHBOARD_PASSWORD = os.environ.get("MAIA_PASSWORD", "81412")
+# 0 = load every model at startup (fastest). On small hosts set e.g. 2 so only
+# the most recently used models stay in memory; the rest load on demand.
+MAX_LOADED = int(os.environ.get("MAIA_MAX_LOADED", "0"))
+# Set to 0 on a public server so strangers' scans aren't kept on disk
+KEEP_UPLOADS = os.environ.get("MAIA_KEEP_UPLOADS", "1") != "0"
 VERSION = "2.1.0"
 ALLOWED_EXTENSIONS = {".png", ".jpg", ".jpeg"}
 
@@ -88,15 +95,49 @@ MODELS = [
     },
 ]
 
-# Load models and labels once at startup
 for m in MODELS:
     folder = os.path.join(BASE_DIR, "models", m["id"])
-    m["session"] = ort.InferenceSession(os.path.join(folder, "resnet18.onnx"), providers=["CPUExecutionProvider"])
-    m["input"] = m["session"].get_inputs()[0].name
+    m["path"] = os.path.join(folder, "resnet18.onnx")
     with open(os.path.join(folder, "labels.txt")) as f:
         m["labels"] = [line.strip() for line in f if line.strip()]
 
 nets = {m["id"]: m for m in MODELS}
+
+_sessions = OrderedDict()  # model id -> loaded ONNX session, least recently used first
+_sessions_lock = threading.Lock()
+
+
+def release_memory():
+    # glibc holds on to freed memory; hand it back so small hosts don't run out
+    try:
+        ctypes.CDLL("libc.so.6").malloc_trim(0)
+    except (OSError, AttributeError):
+        pass  # not Linux / not glibc, nothing to do
+
+
+def get_session(model_id):
+    with _sessions_lock:
+        if model_id in _sessions:
+            _sessions.move_to_end(model_id)
+            return _sessions[model_id]
+        if MAX_LOADED and len(_sessions) >= MAX_LOADED:
+            # Make room first so we never hold more than MAX_LOADED models
+            _sessions.popitem(last=False)
+            release_memory()
+        opts = ort.SessionOptions()
+        if MAX_LOADED:
+            # Trade a little speed for a lot less memory
+            opts.enable_cpu_mem_arena = False
+            opts.enable_mem_pattern = False
+            opts.intra_op_num_threads = 1
+        sess = ort.InferenceSession(nets[model_id]["path"], opts, providers=["CPUExecutionProvider"])
+        _sessions[model_id] = sess
+        return sess
+
+
+if not MAX_LOADED:
+    for m in MODELS:
+        get_session(m["id"])
 model_enabled = {m["id"]: True for m in MODELS}
 
 
@@ -130,7 +171,7 @@ def index():
 
 @app.route("/info")
 def info():
-    return render_template("info.html", models=[public_info(m) for m in MODELS], version=VERSION)
+    return render_template("info.html", models=[public_info(m) for m in MODELS], version=VERSION, keep_uploads=KEEP_UPLOADS)
 
 
 @app.route("/login", methods=["GET", "POST"])
@@ -188,12 +229,17 @@ def classify():
     try:
         img_input = preprocess_image(filename)
     except (UnidentifiedImageError, OSError):
-        os.remove(filename)
+        if os.path.exists(filename):
+            os.remove(filename)
         return jsonify({"error": "That file couldn't be opened as an image."}), 400
+    finally:
+        if not KEEP_UPLOADS and os.path.exists(filename):
+            os.remove(filename)
 
+    m = nets[mode]
     try:
-        m = nets[mode]
-        probs = m["session"].run(None, {m["input"]: img_input})[0][0]
+        sess = get_session(mode)
+        probs = sess.run(None, {sess.get_inputs()[0].name: img_input})[0][0]
     except Exception as e:
         return jsonify({"error": f"The model failed to run: {e}"}), 500
 
